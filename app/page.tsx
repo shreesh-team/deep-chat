@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 
 const chatHistory = [
   "I want you to verify NDA from ...",
@@ -217,11 +218,18 @@ function SettingsModal({ onClose }: { onClose: () => void }) {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function Home() {
+  const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [message, setMessage] = useState("");
   const [selectedModel, setSelectedModel] = useState("gemma3:12b");
   const [activeChat, setActiveChat] = useState<number | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+
+  useEffect(() => {
+    if (!localStorage.getItem("user")) {
+      router.replace("/login");
+    }
+  }, [router]);
 
   return (
     <>
