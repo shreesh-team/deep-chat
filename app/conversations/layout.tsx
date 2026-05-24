@@ -7,6 +7,7 @@ import type { Conversation } from '@/types'
 import { useToast } from '@/lib/useToast'
 import ConversationSidebar from '@/components/ConversationSidebar'
 import NewConversationModal from '@/components/NewConversationModal'
+import SettingsModal from '@/components/SettingsModal'
 import ToastContainer from '@/components/ToastContainer'
 
 interface ConversationsContextValue {
@@ -33,10 +34,11 @@ export default function ConversationsLayout({ children }: { children: React.Reac
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
   const { toasts, addToast, removeToast } = useToast()
   const initialized = useRef(false)
 
-  // Derive active ID from current URL — no effect needed
+  // Derive active ID from URL — no effect needed
   const activeId = pathname.match(/\/conversations\/([^/]+)/)?.[1] ?? null
 
   // Auth guard
@@ -63,11 +65,15 @@ export default function ConversationsLayout({ children }: { children: React.Reac
       .then(data => {
         setConversations(data)
         setLoading(false)
+        // Auto-open first conversation if on the index route
+        if (data.length > 0 && window.location.pathname === '/conversations') {
+          router.replace(`/conversations/${data[0].id}`)
+        }
       })
       .catch(() => {
         setLoading(false)
       })
-  }, [])
+  }, [router])
 
   function handleSelect(id: string) {
     router.push(`/conversations/${id}`)
@@ -94,6 +100,7 @@ export default function ConversationsLayout({ children }: { children: React.Reac
               activeId={activeId}
               onSelect={handleSelect}
               onNewConversation={() => setShowModal(true)}
+              onOpenSettings={() => setShowSettings(true)}
             />
           </div>
         </div>
@@ -108,7 +115,12 @@ export default function ConversationsLayout({ children }: { children: React.Reac
         <NewConversationModal
           onClose={() => setShowModal(false)}
           onCreated={handleCreated}
+          onOpenSettings={() => { setShowModal(false); setShowSettings(true) }}
         />
+      )}
+
+      {showSettings && (
+        <SettingsModal onClose={() => setShowSettings(false)} />
       )}
 
       <ToastContainer toasts={toasts} onDismiss={removeToast} />
