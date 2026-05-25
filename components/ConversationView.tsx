@@ -5,6 +5,7 @@ import type { ConversationDetail, Message } from '@/types'
 import { getTitle } from '@/types'
 import { api, ApiError } from '@/lib/api'
 import { getFriendlyError } from '@/lib/errorMessages'
+import { getApiKey } from '@/lib/models'
 import StatusBadge from './StatusBadge'
 import MessageBubble from './MessageBubble'
 import MessageInput from './MessageInput'
@@ -47,13 +48,43 @@ export default function ConversationView({ detail, onUpdate, onRefreshList, addT
       isOptimistic: true,
     }
 
-    setOptimisticMessages(prev => [...prev, optimistic])
+    setOptimisticMessages([optimistic])
     setSending(true)
 
     try {
       const saved = await api.sendMessage(detail.id, content)
-      setOptimisticMessages([])
+
+      // Commit user message to local state before streaming begins
       onUpdate({ messages: [...detail.messages, saved] })
+
+      // Build context for the LLM (user + assistant turns only)
+      const context = [...detail.messages, saved]
+        .filter(m => m.role === 'user' || m.role === 'assistant')
+        .map(m => ({ role: m.role as 'user' | 'assistant', content: m.content }))
+
+      // Show an empty streaming assistant bubble
+      const streamId = `stream-${Date.now()}`
+      const streamingAssistant: Message = {
+        id: streamId,
+        conversation_id: detail.id,
+        role: 'assistant',
+        content: '',
+        sequence: saved.sequence + 1,
+        created_at: new Date().toISOString(),
+        isOptimistic: true,
+      }
+      setOptimisticMessages([streamingAssistant])
+
+      await api.streamChat(detail.id, context, getApiKey('google') ?? '', (text) => {
+        setOptimisticMessages(prev =>
+          prev.map(m => m.id === streamId ? { ...m, content: m.content + text } : m),
+        )
+      })
+
+      // Stream complete — re-fetch to replace optimistic with the DB-saved assistant message
+      const updated = await api.getConversation(detail.id)
+      setOptimisticMessages([])
+      onUpdate({ messages: updated.messages })
       onRefreshList()
     } catch (err) {
       setOptimisticMessages([])
