@@ -1,4 +1,4 @@
-import type { Conversation, ConversationDetail, Message } from '@/types'
+import type { Conversation, ConversationDetail, Message, InferenceLogsPage } from '@/types'
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
 
@@ -78,6 +78,23 @@ export const api = {
     apiFetch<Conversation>(`/api/conversations/${id}/cancel`, {
       method: 'PATCH',
     }),
+
+  getInferenceLogs: (params: {
+    status?: 'success' | 'error'
+    model?: string
+    conversation_id?: string
+    page?: number
+    page_size?: number
+  } = {}) => {
+    const q = new URLSearchParams()
+    if (params.status) q.set('status', params.status)
+    if (params.model) q.set('model', params.model)
+    if (params.conversation_id) q.set('conversation_id', params.conversation_id)
+    if (params.page !== undefined) q.set('page', String(params.page))
+    if (params.page_size !== undefined) q.set('page_size', String(params.page_size))
+    const qs = q.toString()
+    return apiFetch<InferenceLogsPage>(`/api/inference-logs${qs ? `?${qs}` : ''}`)
+  },
 
   streamChat: async (
     conversationId: string,

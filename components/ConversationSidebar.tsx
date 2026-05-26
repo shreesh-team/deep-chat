@@ -1,5 +1,6 @@
 'use client'
 
+import { usePathname, useRouter } from 'next/navigation'
 import type { Conversation } from '@/types'
 import ConversationItem from './ConversationItem'
 
@@ -29,9 +30,13 @@ export default function ConversationSidebar({
   onNewConversation,
   onOpenSettings,
 }: Props) {
+  const pathname = usePathname()
+  const router = useRouter()
+  const isLogsActive = pathname.startsWith('/conversations/logs')
+
   return (
     <div className="flex flex-col h-full">
-      <div className="p-3 border-b border-gray-100">
+      <div className="p-3 border-b border-gray-100 space-y-1">
         <button
           onClick={onNewConversation}
           className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-white bg-gray-900 hover:bg-gray-700 rounded-xl transition-colors"
@@ -41,6 +46,19 @@ export default function ConversationSidebar({
             <line x1="1" y1="7" x2="13" y2="7" />
           </svg>
           New Conversation
+        </button>
+        <button
+          onClick={() => router.push('/conversations/logs')}
+          className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors ${
+            isLogsActive
+              ? 'bg-gray-100 text-gray-900 font-medium'
+              : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+          }`}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18" />
+          </svg>
+          Inference Logs
         </button>
       </div>
 

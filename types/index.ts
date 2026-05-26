@@ -35,3 +35,28 @@ export interface ApiError {
 export function getTitle(conversation: Pick<Conversation, 'title'>): string {
   return conversation.title ?? 'Untitled'
 }
+
+export interface InferenceLog {
+  id: string
+  conversation_id: string | null
+  model: string
+  provider: string
+  status: 'success' | 'error'
+  latency_ms: number | null
+  input_tokens: number | null
+  output_tokens: number | null
+  total_tokens: number | null
+  input_preview: string | null
+  output_preview: string | null
+  error_message: string | null
+  request_at: string
+  response_at: string | null
+  created_at: string
+}
+
+export interface InferenceLogsPage {
+  items: InferenceLog[]
+  total: number
+  page: number
+  page_size: number
+}
