@@ -40,7 +40,7 @@ export default function LoginPage() {
     setErrors({});
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:8000/login", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim(), password }),
